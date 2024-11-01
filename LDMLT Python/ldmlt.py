@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.linalg import svd
-import time
 #from fastdtw import fastdtw
 
 def dtw_metric(MTS_1, MTS_2, M):

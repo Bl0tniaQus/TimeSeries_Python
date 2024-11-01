@@ -4,7 +4,6 @@ import decimal
 import time
 import sysconfig
 from scipy.io import loadmat
-print("GIL_DISABLED: " + str(sysconfig.get_config_var("Py_GIL_DISABLED")))
 TRAIN_X = loadmat('../MSRA_I_TRAIN_X.mat')
 TRAIN_Y = loadmat('../MSRA_I_TRAIN_Y.mat')
 TEST_X = loadmat('../MSRA_I_TEST_X.mat')
