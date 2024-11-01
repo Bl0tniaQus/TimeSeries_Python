@@ -1,6 +1,6 @@
 import numpy as np
-from scipy.spatial.distance import cdist
 from scipy.linalg import svd
+import time
 #from fastdtw import fastdtw
 
 def dtw_metric(MTS_1, MTS_2, M):
@@ -104,7 +104,6 @@ def KNN_TS(X_train, Y_train, X_test, M, K_vector):
                 place = np.nonzero(Y_kind == Y_train[Inds[j]])
                 counts[place] += 1 / Y_train[Inds[j]]
             Pred_Y[K_index, index_test] = Y_kind[np.argmax(counts)]
-    print(np.shape(Pred_Y))
     return Pred_Y
 
 def LDMLT_TS(X, Y, params=None):
@@ -114,9 +113,6 @@ def LDMLT_TS(X, Y, params=None):
 
     num_candidates = len(X)
     num_features = len(X[0][0])
-    print(num_candidates)
-    print(num_features)
-    print(type(X))
     # The Mahalanobis matrix M starts from identity matrix
     M = np.eye(num_features, num_features)
     # Get all the labels of the data
@@ -171,7 +167,6 @@ def update_M(M, X, triplet, gamma, rho):
             M = M / np.trace(M)
 
         i += 1
-    np.set_printoptions(floatmode = "maxprec")
     return M * M.shape[0]
 
 def data_rank(X, Y, Y_kind):

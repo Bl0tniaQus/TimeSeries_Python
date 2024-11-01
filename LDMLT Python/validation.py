@@ -1,9 +1,10 @@
 import numpy as np
 import ldmlt
 import decimal
+import time
+import sysconfig
 from scipy.io import loadmat
-from sktime.datasets import load_from_tsfile
-
+print("GIL_DISABLED: " + str(sysconfig.get_config_var("Py_GIL_DISABLED")))
 TRAIN_X = loadmat('../MSRA_I_TRAIN_X.mat')
 TRAIN_Y = loadmat('../MSRA_I_TRAIN_Y.mat')
 TEST_X = loadmat('../MSRA_I_TEST_X.mat')
@@ -21,8 +22,11 @@ parameters = {
 max_knn = 3
 
 print('training...')
+start = time.time()
 M = ldmlt.LDMLT_TS(TRAIN_X, TRAIN_Y, parameters)  # training
+end = time.time()
 print('training done')
+print(end - start)
 k_vector = list(range(1, max_knn + 1))
 
 print('testing...')
