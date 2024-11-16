@@ -105,4 +105,3 @@ print(f'Testing time: {endTime_test:.3f}sec, {endTime_test/len(TEST_X):.3f}sec p
 #CM, fig_handle = confusionMatrix(trueLabel[testInd], prediction, categories)
 Accuracy = np.mean(TEST_Y == prediction)
 print(f'Accuracy = {Accuracy * 100:.2f}%')
-#TODO nie bardzo to działa xd
