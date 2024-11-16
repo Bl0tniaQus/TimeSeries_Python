@@ -1,9 +1,8 @@
 import numpy as np
 
-def HDist(points, Trans, Grid, alpha=1.0, beta=1.0, isGrid=True):
+def HDist(points, Trans, Grid, i, alpha=1.0, beta=1.0, isGrid=True):
     # compute the modified Hausdorff distance between the given trajectory 
     # (points) and a learned model (Trans).
-    
     if Trans is None or Grid is None:
         raise ValueError('Transition list or Grid is empty!')
 
@@ -17,7 +16,7 @@ def HDist(points, Trans, Grid, alpha=1.0, beta=1.0, isGrid=True):
         points = np.round((points - np.tile(gridCenter, (m, 1))) / 
                           np.tile(gridSize, (m, 1))) * np.tile(gridSize, (m, 1)) + \
                           np.tile(gridCenter, (m, 1))
-
+    
     # direction, location and length of transitions in the embedding space
     vec_Trans = Trans[:, n:2*n] - Trans[:, :n]
     loc_Trans = (Trans[:, n:2*n] + Trans[:, :n]) / 2
@@ -27,13 +26,12 @@ def HDist(points, Trans, Grid, alpha=1.0, beta=1.0, isGrid=True):
     vec_points = points[1:, :] - points[:-1, :]
     loc_points = (points[1:, :] + points[:-1, :]) / 2
     len_points = np.sqrt(np.sum(vec_points**2, axis=1))
-
     # normalized angle between learned transitions and given trajectory
     norm_angle = np.exp(np.real(np.arccos(vec_points @ vec_Trans.T / 
                                            (len_points[:, None] * len_Trans[None, :])))
                           )
+    
     norm_angle[len_points == 0, len_Trans == 0] = 0
-
     # normalized length difference
     norm_length = np.exp((np.tile(len_points[:, None], (1, p)) - 
                            np.tile(len_Trans[None, :], (m-1, 1)))**2 / 
@@ -49,7 +47,7 @@ def HDist(points, Trans, Grid, alpha=1.0, beta=1.0, isGrid=True):
             norm_distance[i, :] = np.sqrt(np.sum((np.tile(loc_points[i, :], (p, 1)) - loc_Trans)**2, axis=1))
 
     norm_dist = norm_distance + alpha * norm_length + beta * norm_angle
-    dist = np.min(norm_dist, axis=1)
+    dist = np.nanmin(norm_dist, axis=1)
     return np.nanmean(dist[len_points > 0])
 
 def Trans_Prob(Trans):
@@ -89,16 +87,14 @@ def add2Trans(points, Trans, Grid, isGrid=False):
 
     # approximate the points to the nearest grid cell
     if isGrid:
-        gridCenter = Grid['center']
-        gridSize = Grid['size']
         m, n = points.shape
-        if len(gridCenter) != n:
-            gridCenter = np.tile(gridCenter[0], (1, n))
-        if len(gridSize) != n:
-            gridSize = np.tile(gridSize[0], (1, n))
-        temp = np.round((points - np.tile(gridCenter, (m, 1))) / 
-                        np.tile(gridSize, (m, 1))) * np.tile(gridSize, (m, 1)) + \
-                        np.tile(gridCenter, (m, 1))
+        if len(Grid['center']) != n:
+            Grid['center'] = np.tile(Grid['center'][0], (1, n))
+        if len(Grid['size']) != n:
+            Grid['size'] = np.tile(Grid['size'][0], (1, n))
+        temp = np.round((points - np.tile(Grid['center'], (m, 1))) / 
+                        np.tile(Grid['size'], (m, 1))) * np.tile(Grid['size'], (m, 1)) + \
+                        np.tile(Grid['center'], (m, 1))
     else:
         temp = points
 
@@ -109,7 +105,7 @@ def add2Trans(points, Trans, Grid, isGrid=False):
     else:
         Trans = temp
     
-    return Trans
+    return Trans, Grid
 
 def create_grid(grid_size, grid_center):
     """
@@ -184,9 +180,8 @@ def delay_embedding_nd(x, dim=2, step=1, w=1):
     # check input
     if x is None:
         raise ValueError('Not enough input arguments')
-    
     n, n_dim = x.shape
-
+    
     # init output
     if n < dim:
         raise ValueError('Too large dimension')
@@ -195,7 +190,10 @@ def delay_embedding_nd(x, dim=2, step=1, w=1):
 
     # delay embedding
     for i in range(n_dim):
-        y.extend(delay_embedding(x[:, i], dim, step, w))
+        if len(y) == 0:
+            y = delay_embedding(x[:, i], dim, step, w)
+        else:
+            y = np.hstack((y, delay_embedding(x[:, i], dim, step, w)))
     
     return np.array(y)
 

@@ -17,8 +17,8 @@ TRAIN_X = np.array(TRAIN_X['TRAIN_X'].flat)
 TRAIN_Y = np.array(TRAIN_Y['TRAIN_Y'].flat)
 TEST_X = np.array(TEST_X['TEST_X'].flat)
 TEST_Y = np.array(TEST_Y['TEST_Y'].flat)
-TEST_X = TEST_X[0:10,]
-TEST_Y = TEST_Y[0:10,]
+#TEST_X = TEST_X[0:10,]
+#TEST_Y = TEST_Y[0:10,]
 
 # Load default colors
 # Assuming defaultColors is a .mat file
@@ -47,12 +47,10 @@ for loop in range(len(TRAIN_X)):
         print(f'Trained {loop} / {len(TRAIN_X)}')
     
     # extract data and label
-    x = TRAIN_X[loop]
-    
+    x = TRAIN_X[loop].T
     # low-pass filter
     for i in range(x.shape[0]):
         x[i, :], _ = DE.lowpass_filter(x[i, :], filter_param)
-    
     # data normalization
     #if 'MSR_Action3D' in dataset[datasetInd]:
     #    x = x - np.tile(x[:, 0].reshape(-1, 1), (1, x.shape[1]))
@@ -60,14 +58,12 @@ for loop in range(len(TRAIN_X)):
     
     # multi-dimensional delay embedding
     point_cloud = DE.delay_embedding_nd(x.T, DE_dim, DE_step, DE_slid)
-    
     # update transition list
-    Trans[y] = DE.add2Trans(point_cloud, Trans[y], Grid[y], isGrid)
+    Trans[y], Grid[y] = DE.add2Trans(point_cloud, Trans[y], Grid[y], isGrid)
 
 # refine transition list and compute transition probability
 for i in classLabels:
-    Trans[y] = DE.Trans_Prob(Trans[y])
-
+    Trans[i] = DE.Trans_Prob(Trans[i])
 endTime_train = time.time() - startTime_train
 
 # testing
@@ -81,7 +77,7 @@ for loop in range(len(TEST_X)):
         print(f'tested {loop} / {len(TEST_X)}')
     
     # extract data and label
-    x = TEST_X[loop]
+    x = TEST_X[loop].T
     
     # low-pass filter
     for i in range(x.shape[0]):
@@ -93,12 +89,9 @@ for loop in range(len(TEST_X)):
     y = TEST_Y[loop]
     # multi-dimensional delay embedding
     point_cloud = DE.delay_embedding_nd(x.T, DE_dim, DE_step, DE_slid)
-    
     # model matching
     for i in classLabels:
-        dist[i] = DE.HDist(point_cloud, Trans[i], Grid[i], alpha, beta, isGrid)
-    
-    
+        dist[i] = DE.HDist(point_cloud, Trans[i], Grid[i], i, alpha, beta, isGrid)
     dists = list(dist.values())
     loc = np.argmin(dists)
     prediction[loop] = classLabels[loc]
@@ -108,7 +101,6 @@ endTime_test = time.time() - startTime_test
 # print training and testing time
 print(f'Training time: {endTime_train:.3f}sec, {endTime_train/len(TRAIN_X):.3f}sec per sample')
 print(f'Testing time: {endTime_test:.3f}sec, {endTime_test/len(TEST_X):.3f}sec per sample')
-print(prediction)
 # plot confusion matrix
 #CM, fig_handle = confusionMatrix(trueLabel[testInd], prediction, categories)
 Accuracy = np.mean(TEST_Y == prediction)
