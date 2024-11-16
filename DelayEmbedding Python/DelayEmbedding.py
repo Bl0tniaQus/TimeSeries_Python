@@ -90,8 +90,8 @@ def add2Trans(points, Trans, Grid, isGrid=False):
         m, n = points.shape
         if len(Grid['center']) != n:
             Grid['center'] = np.tile(Grid['center'][0], (1, n))
-        if len(Grid['size']) != n:
-            Grid['size'] = np.tile(Grid['size'][0], (1, n))
+        if Grid['size'] != n:
+            Grid['size'] = np.tile(Grid['size'], (1, n))
         temp = np.round((points - np.tile(Grid['center'], (m, 1))) / 
                         np.tile(Grid['size'], (m, 1))) * np.tile(Grid['size'], (m, 1)) + \
                         np.tile(Grid['center'], (m, 1))
@@ -105,7 +105,7 @@ def add2Trans(points, Trans, Grid, isGrid=False):
     else:
         Trans = temp
     
-    return Trans, Grid
+    return Trans
 
 def create_grid(grid_size, grid_center):
     """

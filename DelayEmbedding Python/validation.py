@@ -59,7 +59,7 @@ for loop in range(len(TRAIN_X)):
     # multi-dimensional delay embedding
     point_cloud = DE.delay_embedding_nd(x.T, DE_dim, DE_step, DE_slid)
     # update transition list
-    Trans[y], Grid[y] = DE.add2Trans(point_cloud, Trans[y], Grid[y], isGrid)
+    Trans[y] = DE.add2Trans(point_cloud, Trans[y], Grid[y], isGrid)
 
 # refine transition list and compute transition probability
 for i in classLabels:
