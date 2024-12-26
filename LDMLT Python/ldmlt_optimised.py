@@ -1,7 +1,8 @@
 import numpy as np
 from scipy.linalg import svd
-#from fastdtw import fastdtw
 import time
+#from fastdtw import fastdtw
+
 class LDMLT:
     def __init__(self, triplets_factor = 20, cycles = 3, alpha_factor = 5):
         self.triplets_factor = triplets_factor
@@ -10,7 +11,7 @@ class LDMLT:
         self.M = None
         self.X = None
         self.Y = None
-    def DTW(self, MTS_1, MTS_2, M):
+    def DTW(self, MTS_1, MTS_2, M, distOnly = False):
         MTS_1 = MTS_1.T
         MTS_2 = MTS_2.T
         _, col_1 = MTS_1.shape
@@ -19,11 +20,7 @@ class LDMLT:
         D1 = MTS_1.T @ M @ MTS_1
         D2 = MTS_2.T @ M @ MTS_2
         D3 = MTS_1.T @ M @ MTS_2
-        d = np.zeros((col_1,col_2))
-        for i in range(col_1):
-            for j in range(col_2):
-                d[i, j] = D1[i, i] + D2[j, j] - 2 * D3[i, j]
-        
+        d = np.array([[D1[i, i] + D2[j, j] - 2 * D3[i, j] for j in range(col_2)] for i in range(col_1)])
         D = np.zeros_like(d)
         D[0, 0] = d[0, 0]
         for m in range(1, col_1):
@@ -35,6 +32,8 @@ class LDMLT:
                 D[m, n] = d[m, n] + min(D[m-1, n], min(D[m-1, n-1], D[m, n-1]))
         
         Dist = D[col_1-1, col_2-1]
+        if distOnly:
+            return Dist, None, None
         n = col_2 - 1
         m = col_1 - 1
         k = 1
@@ -71,7 +70,7 @@ class LDMLT:
             Distance = np.zeros(n_train)
             for index_train in range(n_train):
                 #Dist, MTS_E1, MTS_E2 = dtw_metric(X_train[:, index_train], X_test[:, index_test], M)
-                Dist, MTS_E1, MTS_E2 = self.DTW(self.X[index_train], X[index_test], self.M)
+                Dist, _, _= self.DTW(self.X[index_train], X[index_test], self.M, distOnly = True)
                 Distance[index_train] = Dist
             Inds = np.argsort(Distance,stable=True)
             
@@ -153,6 +152,7 @@ class LDMLT:
             Y_data.extend([Y[i] for i in index])
         return X_data, Y_data
     def orderCheck(self, X, M, Y):
+        start = time.time()
         numberCandidate = len(X)
         compactfactor = 2
         Y_kind = np.sort(np.unique(Y))
@@ -172,20 +172,21 @@ class LDMLT:
         map_vector_kind_length = len(map_vector_kind)
         S = np.zeros((map_vector_kind_length, map_vector_kind_length))
         
+        #S = np.array([[1 if Y[map_vector_kind[i]] == Y[map_vector_kind[j]] else 0 for j in range(map_vector_kind_length)] for i in range(map_vector_kind_length)])
+        
         for i in range(map_vector_kind_length):
-            for j in range(map_vector_kind_length):
+            for j in range(i):
                 if Y[map_vector_kind[i]] == Y[map_vector_kind[j]]:
                     S[i, j] = 1
+                    S[j, i] = 1
         
         Distance = np.zeros((map_vector_kind_length,map_vector_kind_length))
-        #TODO możliwa optymalizacja
+  
         for i in range(len(map_vector_kind)):
             for j in range(i, len(map_vector_kind)):
-                Dist, _, _ = self.DTW(X[map_vector_kind[i]], X[map_vector_kind[j]], M)
+                Dist, _, _ = self.DTW(X[map_vector_kind[i]], X[map_vector_kind[j]], M, distOnly = True)
                 Distance[i, j] = Dist
-        for i in range(len(map_vector_kind)):
-            for j in range(i):
-                Distance[i, j] = Distance[j, i]
+                Distance[j, i] = Dist
         Disorder = np.zeros(numberCandidate)
         for i in range(len(map_vector_kind)):
             Distance_i = Distance[i, :]
@@ -209,6 +210,7 @@ class LDMLT:
             for j in range(len(map_vector_kind)):
                 index_j = np.where(map_vector == map_vector_kind[j])[0]
                 Distance_Extended[np.ix_(index_i,index_j)] = Distance_Low[i, j]
+        
         return Distance_Extended, Disorder
     def selectTriplets(self, X, factor, Mt, Y, S):
         bias = 3

@@ -3,11 +3,6 @@ import DelayEmbedding as DE
 from scipy.io import loadmat
 import scipy.io as sio
 import time
-# Clear workspace
-# Note: In Python, we don't have a direct equivalent to `clc; clear; close all`
-# but we can just ensure we start fresh in a script.
-
-# Load data (two datasets are available in this demo)
 
 TRAIN_X = loadmat('../MSRA_I_TRAIN_X.mat')
 TRAIN_Y = loadmat('../MSRA_I_TRAIN_Y.mat')
@@ -17,12 +12,8 @@ TRAIN_X = np.array(TRAIN_X['TRAIN_X'].flat)
 TRAIN_Y = np.array(TRAIN_Y['TRAIN_Y'].flat)
 TEST_X = np.array(TEST_X['TEST_X'].flat)
 TEST_Y = np.array(TEST_Y['TEST_Y'].flat)
-#TEST_X = TEST_X[0:10,]
-#TEST_Y = TEST_Y[0:10,]
 
-# Load default colors
-# Assuming defaultColors is a .mat file
-#default_colors = sio.loadmat('defaultColors')['defaultColors']
+
 DE_step = 3; 
 DE_dim = 2;
 DE_slid = 2; 
