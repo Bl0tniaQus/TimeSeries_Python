@@ -22,14 +22,16 @@ class LDMLT:
         D3 = MTS_1.T @ M @ MTS_2
         d = np.array([[D1[i, i] + D2[j, j] - 2 * D3[i, j] for j in range(col_2)] for i in range(col_1)])
         D = np.zeros_like(d)
-        D[0, 0] = d[0, 0]
-        for m in range(1, col_1):
-            D[m, 0] = d[m, 0] + D[m-1, 0]
-        for n in range(1, col_2):
-            D[0, n] = d[0, n] + D[0, n-1]
-        for m in range(1, col_1):
-            for n in range(1, col_2):
-                D[m, n] = d[m, n] + min(D[m-1, n], min(D[m-1, n-1], D[m, n-1]))
+        for m in range(col_1):
+            for n in range(col_2):
+                if m == 0 and n == 0:
+                    D[m, n] = d[m, n]
+                elif m == 0 and n > 0:
+                    D[m, n] = d[m, n] + D[m, n-1]
+                elif n == 0 and m > 0:
+                    D[m, n] = d[m, n] + D[m-1, n]
+                else:
+                    D[m, n] = d[m, n] + min(D[m-1, n], min(D[m-1, n-1], D[m, n-1]))
         
         Dist = D[col_1-1, col_2-1]
         if distOnly:
@@ -62,6 +64,8 @@ class LDMLT:
             MTS_E2[i, :] = MTS_2[i, w[:, 1].astype(int)]
         return Dist, MTS_E1, MTS_E2
     def predict(self, X, k = 3):
+        if len(X[0].shape) == 1:
+            X = np.array([X])
         n_train = self.X.shape[0]
         n_test = X.shape[0]
         Y_kind = np.unique(self.Y)
@@ -100,7 +104,9 @@ class LDMLT:
             for j in range(num_candidates):
                 if Y_n[i] == Y_n[j]:
                     S[i, j] = 1
+        
         Triplet, rho, Error_old = self.selectTriplets(X_n, triplets_factor, M, Y_n, S)
+        
         iter_count = len(Triplet)
         total_iter = iter_count
         for i in range(self.cycles):
@@ -152,7 +158,6 @@ class LDMLT:
             Y_data.extend([Y[i] for i in index])
         return X_data, Y_data
     def orderCheck(self, X, M, Y):
-        start = time.time()
         numberCandidate = len(X)
         compactfactor = 2
         Y_kind = np.sort(np.unique(Y))
@@ -171,17 +176,15 @@ class LDMLT:
         map_vector_kind = np.unique(map_vector)
         map_vector_kind_length = len(map_vector_kind)
         S = np.zeros((map_vector_kind_length, map_vector_kind_length))
-        
-        #S = np.array([[1 if Y[map_vector_kind[i]] == Y[map_vector_kind[j]] else 0 for j in range(map_vector_kind_length)] for i in range(map_vector_kind_length)])
-        
         for i in range(map_vector_kind_length):
             for j in range(i):
                 if Y[map_vector_kind[i]] == Y[map_vector_kind[j]]:
                     S[i, j] = 1
                     S[j, i] = 1
+            S[i,i] = 1
         
         Distance = np.zeros((map_vector_kind_length,map_vector_kind_length))
-  
+        #TODO możliwa optymalizacja
         for i in range(len(map_vector_kind)):
             for j in range(i, len(map_vector_kind)):
                 Dist, _, _ = self.DTW(X[map_vector_kind[i]], X[map_vector_kind[j]], M, distOnly = True)
@@ -203,14 +206,13 @@ class LDMLT:
                     rs1 -= 1
             index = np.nonzero(map_vector == map_vector_kind[i])[0]
             Disorder[index] = rs2
-        Distance_Low = Distance.copy()
         Distance_Extended = np.zeros((numberCandidate,numberCandidate))
         for i in range(len(map_vector_kind)):
             index_i = np.where(map_vector == map_vector_kind[i])[0]
-            for j in range(len(map_vector_kind)):
+            for j in range(i, len(map_vector_kind)):
                 index_j = np.where(map_vector == map_vector_kind[j])[0]
-                Distance_Extended[np.ix_(index_i,index_j)] = Distance_Low[i, j]
-        
+                Distance_Extended[np.ix_(index_i,index_j)] = Distance[i, j]
+                Distance_Extended[np.ix_(index_j,index_i)] = Distance[j, i]
         return Distance_Extended, Disorder
     def selectTriplets(self, X, factor, Mt, Y, S):
         bias = 3
