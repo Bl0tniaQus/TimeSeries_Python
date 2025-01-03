@@ -19,7 +19,7 @@ class DelayEmbedding:
         n_dimSignal = X[0].shape[0]
         self.Trans = {}
         for y in self.classLabels:
-            self.Trans[y] = []
+            self.Trans[y.item()] = []
         for loop in range(len(X)):
             x = X[loop].T
         # low-pass filter
@@ -35,22 +35,22 @@ class DelayEmbedding:
             # update transition list
             self.Trans[y] = self.add2Trans(point_cloud, self.Trans[y])
         for i in self.classLabels:
-            self.Trans[i] = self.Trans_Prob(self.Trans[i])
+            self.Trans[i.item()] = self.Trans_Prob(self.Trans[i.item()])
     def predict(self, X):
         if len(X[0].shape) == 1:
             X = np.array([X])
         predictions = [0 for i in range(len(X))]
         dist = {}
         for i in self.classLabels:
-            dist[i] = 0
+            dist[i.item()] = 0
         for loop in range(len(X)):
             x = X[loop].T
             for i in range(x.shape[0]):
                 x[i, :], _ = self.lowpass_filter(x[i, :], self.filter_param)
             point_cloud = self.delay_embedding_nd(x.T, self.DE_dim, self.DE_step, self.DE_slid)
             for i in self.classLabels:
-                dist[i] = self.HDist(point_cloud, self.Trans[i], i, self.alpha, self.beta)
-            dists = list(dist.values())
+                dist[i.item()] = self.HDist(point_cloud, self.Trans[i.item()], i, self.alpha, self.beta)
+            dists = np.array(list(dist.values()))
             loc = np.argmin(dists)
             predictions[loop] = self.classLabels[loc]
         if len(X) == 0:
@@ -174,8 +174,8 @@ class DelayEmbedding:
         # Delay embedding
         ind = np.arange(0, n, w)
         for i in range(y.shape[0]):
-            temp = x[ind[i]:ind[i] + step * dim:step]
-            y[i, :] = np.reshape(temp, (1, len(temp)))
+            temp = x[ind[i].item():ind[i].item() + step * dim:step]
+            y[i, :] = np.asarray(np.reshape(temp, (1, len(temp))))
 
         return y
 

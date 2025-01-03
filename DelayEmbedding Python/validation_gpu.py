@@ -1,10 +1,9 @@
 import numpy as np
-import DelayEmbedding as DE
+import DelayEmbedding_GPU as DE
 from scipy.io import loadmat
 from sklearn.metrics import accuracy_score
 import scipy.io as sio
 import time
-
 
 
 TRAIN_X = loadmat('../data/MSRA_I_TRAIN_X.mat')
@@ -22,5 +21,6 @@ start = time.time()
 model.fit(TRAIN_X, TRAIN_Y)
 end = time.time()
 Y_pred = model.predict(TEST_X)  # classification
+Y_pred = [Y_pred[i].item() for i in range(len(Y_pred))]
 accuracy = accuracy_score(TEST_Y, Y_pred)
-print(f" acc: {accuracy:.2f} time: {end-start:.4f}")
+print(f" acc: {accuracy:.3f} time: {end-start:.4f}")
