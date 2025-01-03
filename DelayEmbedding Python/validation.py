@@ -1,5 +1,5 @@
 import numpy as np
-import DelayEmbedding as DE
+import DelayEmbedding_GPU as DE
 from scipy.io import loadmat
 from sklearn.metrics import accuracy_score
 import scipy.io as sio

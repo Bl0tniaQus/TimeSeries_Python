@@ -250,4 +250,3 @@ class LDMLT:
                 triplet = np.concatenate((triplet, new_triplet), axis=0)
         return triplet, rho, error
 
-
