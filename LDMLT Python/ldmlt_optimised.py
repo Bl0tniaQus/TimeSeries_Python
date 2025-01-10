@@ -1,7 +1,5 @@
 import numpy as np
 from scipy.linalg import svd
-import time
-#from fastdtw import fastdtw
 
 class LDMLT:
     def __init__(self, triplets_factor = 20, cycles = 3, alpha_factor = 5):
@@ -66,38 +64,40 @@ class LDMLT:
     def predict(self, X, k = 3):
         if len(X[0].shape) == 1:
             X = np.array([X])
-        n_train = self.X.shape[0]
-        n_test = X.shape[0]
+        n_train = len(self.X)
+        n_test = len(X)
         Y_kind = np.unique(self.Y)
         Pred_Y = np.zeros(n_test)
         for index_test in range(n_test):
             Distance = np.zeros(n_train)
             for index_train in range(n_train):
-                #Dist, MTS_E1, MTS_E2 = dtw_metric(X_train[:, index_train], X_test[:, index_test], M)
                 Dist, _, _= self.DTW(self.X[index_train], X[index_test], self.M, distOnly = True)
                 Distance[index_train] = Dist
             Inds = np.argsort(Distance,stable=True)
             
             counts = np.zeros(len(Y_kind))
             for j in range(k):
-                place = np.nonzero(Y_kind == self.Y[Inds[j]])
-                counts[place] += 1 / self.Y[Inds[j]]
-            Pred_Y[index_test] = Y_kind[np.argmax(counts)]
+                counts[np.nonzero(Y_kind == self.Y[Inds[j]])] += 1
+            ids = np.argwhere(counts == np.amax(counts))
+            if len(ids) == 1:
+                Pred_Y[index_test] = Y_kind[np.argmax(counts)]
+            else:
+                Pred_Y[index_test] = self.Y[Inds[0]]
         if len(Pred_Y) == 1:
             Pred_Y = Pred_Y[0]
         return Pred_Y
         
     def fit(self, X, Y):
-        self.X = X
-        self.Y = Y
-        num_candidates = len(X)
-        num_features = len(X[0][0])
+        self.X = [np.array(X[i].copy()) for i in range(len(X))]
+        self.Y = Y.copy()
+        num_candidates = len(self.X)
+        num_features = len(self.X[0][0])
         triplets_factor = self.triplets_factor
         # The Mahalanobis matrix M starts from identity matrix
         M = np.eye(num_features, num_features)
         # Get all the labels of the data
-        Y_kind = np.unique(Y)
-        X_n, Y_n = self.dataRank(X, Y, Y_kind)
+        Y_kind = np.unique(self.Y)
+        X_n, Y_n = self.dataRank(self.X, self.Y, Y_kind)
         # S record whether dissimilar or not
         S = np.zeros((num_candidates, num_candidates))
         for i in range(num_candidates):
@@ -116,7 +116,7 @@ class LDMLT:
             Triplet, rho, Error_new = self.selectTriplets(X_n, triplets_factor, M, Y_n, S)
             iter_count = len(Triplet)
             total_iter += iter_count
-            self.triplet_factor = Error_new / Error_old * triplets_factor
+            triplets_factor = Error_new / Error_old * triplets_factor
             cov = (Error_old - Error_new) / Error_old
             if abs(cov) < 10e-5:
                 break

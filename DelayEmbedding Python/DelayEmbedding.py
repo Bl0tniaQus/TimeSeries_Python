@@ -3,32 +3,36 @@ import warnings
 warnings.filterwarnings('ignore')
 
 class DelayEmbedding:
-    def __init__(self, DE_step = 3, DE_dim = 2, DE_slid = 2, alpha = 2, beta = 3, filter_param = 0.5):
+    def __init__(self, DE_step = 3, DE_dim = 2, DE_slid = 2, alpha = 2, beta = 3, grid_size = 0, filter_param = 0.5):
         self.DE_step = DE_step
         self.DE_dim = DE_dim
         self.DE_slid = DE_slid
         self.alpha = alpha
         self.beta = beta
         self.filter_param = filter_param
+        self.grid_size = grid_size
         self.Trans = None
-        self.Grid = None
         self.classLabels = None
+        self.Grid = None
+        self.X = None
+        self.Y = None
     def fit(self, X, Y):
-        self.classLabels = np.unique(Y)
+        self.X = [np.array(X[i].copy()) for i in range(len(X))]
+        self.Y = Y.copy()
+        self.classLabels = np.unique(self.Y)
         n_class = len(self.classLabels)
-        n_dimSignal = X[0].shape[0]
+        n_dimSignal = self.X[0].shape[1]
         self.Trans = {}
+        if self.grid_size >0:
+            self.Grid = {'size' : self.grid_size, 'center' : np.zeros(self.DE_dim * n_dimSignal)}
         for y in self.classLabels:
             self.Trans[y] = []
-        for loop in range(len(X)):
-            x = X[loop].T
+        for loop in range(len(self.X)):
+            x = self.X[loop].T
         # low-pass filter
             for i in range(x.shape[0]):
                 x[i, :], _ = self.lowpass_filter(x[i, :], self.filter_param)
-            # data normalization
-            #if 'MSR_Action3D' in dataset[datasetInd]:
-            #    x = x - np.tile(x[:, 0].reshape(-1, 1), (1, x.shape[1]))
-            y = Y[loop]
+            y = self.Y[loop]
             
             # multi-dimensional delay embedding
             point_cloud = self.delay_embedding_nd(x.T, self.DE_dim, self.DE_step, self.DE_slid)
@@ -37,14 +41,15 @@ class DelayEmbedding:
         for i in self.classLabels:
             self.Trans[i] = self.Trans_Prob(self.Trans[i])
     def predict(self, X):
-        if len(X[0].shape) == 1:
-            X = np.array([X])
-        predictions = [0 for i in range(len(X))]
+        X_test = X.copy()
+        if len(X_test[0].shape) == 1:
+            X_test = np.array([X_test])
+        predictions = [0 for i in range(len(X_test))]
         dist = {}
         for i in self.classLabels:
             dist[i] = 0
-        for loop in range(len(X)):
-            x = X[loop].T
+        for loop in range(len(X_test)):
+            x = X_test[loop].T
             for i in range(x.shape[0]):
                 x[i, :], _ = self.lowpass_filter(x[i, :], self.filter_param)
             point_cloud = self.delay_embedding_nd(x.T, self.DE_dim, self.DE_step, self.DE_slid)
@@ -53,21 +58,18 @@ class DelayEmbedding:
             dists = list(dist.values())
             loc = np.argmin(dists)
             predictions[loop] = self.classLabels[loc]
-        if len(X) == 0:
+        if len(X_test) == 0:
             return predictions[0]
         return predictions
             
             
     def HDist(self, points, Trans, i, alpha=1.0, beta=1.0):
-        # compute the modified Hausdorff distance between the given trajectory 
-        # (points) and a learned model (Trans).
-        if Trans is None:
-            raise ValueError('Transition list is empty!')
-
         m, n = points.shape
         p, _ = Trans.shape
-
-        
+        if self.Grid is not None:
+            gridCenter = self.Grid['center']
+            gridSize = self.Grid['size']
+            points = np.round((points - np.tile(gridCenter, (m, 1))) / np.tile(gridSize, (m, 1))) * np.tile(gridSize, (m, 1)) + np.tile(gridCenter, (m, 1))
         # direction, location and length of transitions in the embedding space
         vec_Trans = Trans[:, n:2*n] - Trans[:, :n]
         loc_Trans = (Trans[:, n:2*n] + Trans[:, :n]) / 2
@@ -82,7 +84,8 @@ class DelayEmbedding:
                                                (len_points[:, None] * len_Trans[None, :])))
                               )
         
-        norm_angle[len_points == 0, len_Trans == 0] = 0
+        if np.sum(len_points == 0) > 0 and  np.sum(len_Trans == 0):
+            norm_angle[len_points == 0, len_Trans == 0] = 0
         # normalized length difference
         norm_length = np.exp((np.tile(len_points[:, None], (1, p)) - 
                                np.tile(len_Trans[None, :], (m-1, 1)))**2 / 
@@ -101,47 +104,30 @@ class DelayEmbedding:
         dist = np.nanmin(norm_dist, axis=1)
         return np.nanmean(dist[len_points > 0])
     def Trans_Prob(self, Trans):
-        # combine the same transitions in the transition list
-        # and compute transition probability
-        # Input:
-        #   Trans       an existing transition list 
-        #               each row records a transition formatted as following
-        #               [ start point, end point ]
-
-        # find unique transitions
         C, ic = np.unique(Trans, axis = 0, return_inverse=True)
         l = C.shape[0]
-
-        # compute probabilities of unique transitions
         counts = np.bincount(ic, minlength=l)
         prob = counts / counts.sum()
-
-        # format the new transition list 
-        # [start point, end point, transition probability]
         Trans = np.hstack((C, prob[:, np.newaxis]))
         return Trans
     def add2Trans(self, points, Trans):
-        # add points to an existing transition list
-        # Input:
-        #   points      a matrix, each row is a point 
-        #   Trans       an existing transition list 
-        #               each row records a transition formatted as following
-        #               [ start point, end point ]
-        #   Grid        an existing Grid created by the function createGrid()
-        #   isGrid      a boolean value to indicate whether discretizing 
-        #               the embedding space
-
-
-
-
-        temp = points
-
-        # append the new transitions to the end of the transition list
-        temp = np.hstack((temp[:-1, :], temp[1:, :]))
-        if len(Trans)!=0:
-            Trans = np.vstack((Trans, temp))
+        if self.Grid is not None:
+            m, n = points.shape
+            gridCenter = self.Grid['center']
+            gridSize = self.Grid['size']
+            if len(self.Grid['center']) != n:
+                gridCenter = np.tile(self.Grid['center'][0], (1, n))
+            if self.Grid['size'] != n:
+                gridSize = np.tile(self.Grid['size'], (1, n))
+            temp = np.round((points - np.tile(gridCenter, (m, 1))) / np.tile(gridSize, (m, 1))) * np.tile(gridSize, (m, 1)) + np.tile(gridCenter, (m, 1))
         else:
-            Trans = temp
+            temp = points
+        temp = np.hstack((temp[:-1, :], temp[1:, :]))
+        if temp.shape[0] > 0:
+            if len(Trans)!=0:
+                Trans = np.vstack((Trans, temp))
+            else:
+                Trans = temp
         
         return Trans
 
@@ -169,14 +155,16 @@ class DelayEmbedding:
         n = len(x)
         if n < dim:
             raise ValueError('Too large dimension')
-        y = np.full((round((n - step * (dim - 1)) / w), dim), np.nan)
-
+        d = round(((n - step * (dim - 1)) / w)+0.001)
+        if d<0:
+            d = 0
+        y = np.full((d, dim), np.nan)
         # Delay embedding
         ind = np.arange(0, n, w)
         for i in range(y.shape[0]):
             temp = x[ind[i]:ind[i] + step * dim:step]
             y[i, :] = np.reshape(temp, (1, len(temp)))
-
+        
         return y
 
 
@@ -206,14 +194,12 @@ class DelayEmbedding:
             raise ValueError('Too large dimension')
         
         y = []
-
         # delay embedding
         for i in range(n_dim):
             if len(y) == 0:
                 y = self.delay_embedding(x[:, i], dim, step, w)
             else:
                 y = np.hstack((y, self.delay_embedding(x[:, i], dim, step, w)))
-        
         return np.array(y)
 
     def lowpass_filter(self, input_data, param, tol=100):

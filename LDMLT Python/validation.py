@@ -12,6 +12,8 @@ warnings.filterwarnings('ignore')
 
 
 
+
+
 TRAIN_X = loadmat('../data/MSRA_I_TRAIN_X.mat')
 TRAIN_Y = loadmat('../data/MSRA_I_TRAIN_Y.mat')
 TEST_X = loadmat('../data/MSRA_I_TEST_X.mat')
@@ -27,28 +29,93 @@ TEST_Y = np.array(TEST_Y['TEST_Y'].flat)
 
 t = []
 t_o = []
-n = 20
-cycles = 1
-for i in range(n):
-    model = ld.LDMLT(20,cycles,5)
-    start = time.time()
-    model.fit(TRAIN_X,TRAIN_Y)
-    end = time.time()
-    t.append(end-start)
+# ~ n = 1
+# ~ for i in range(n):
+    # ~ model = ld.LDMLT(20,cycles,5)
+    # ~ start = time.time()
+    # ~ model.fit(TRAIN_X,TRAIN_Y)
+    # ~ end = time.time()
+    # ~ t.append(end-start)
 
-for i in range(n):
-    model = ld_o.LDMLT(20,cycles,5)
-    start = time.time()
-    model.fit(TRAIN_X,TRAIN_Y)
-    end = time.time()
-    t_o.append(end-start)
+# ~ for i in range(n):
+    # ~ model = ld_o.LDMLT(20,1,5)
+    # ~ start = time.time()
+    # ~ model.fit(TRAIN_X,TRAIN_Y)
+    # ~ end = time.time()
+    # ~ t_o.append(end-start)
 
-print(f"1 - min: {min(t):.4f} max: {max(t):.4f} avg: {(sum(t)/n):.4f}")
-print(f"2 - min: {min(t_o):.4f} max: {max(t_o):.4f} avg: {(sum(t_o)/n):.4f}")
+# ~ print(f"1 - min: {min(t):.4f} max: {max(t):.4f} avg: {(sum(t)/n):.4f}")
+# ~ print(f"2 - min: {min(t_o):.4f} max: {max(t_o):.4f} avg: {(sum(t_o)/n):.4f}")
 
 
-for k in range(1, 2):
-    Y_pred = model.predict(TEST_X, k)  # classification
-    accuracy = accuracy_score(TEST_Y, Y_pred)
-    print(f"k = {k}; acc: {accuracy:.3f}")
+# ~ for k in range(1, 2):
+    # ~ Y_pred = model.predict(TEST_X, k)  # classification
+    # ~ accuracy = accuracy_score(TEST_Y, Y_pred)
+    # ~ print(f"k = {k}; acc: {accuracy:.3f}")
+tripletsfactor = 20
+cycle = 15 
+alphafactor = 5
+k = 1
+# ~ res = ""
+# ~ tfs = [10,12,14,16,18,20,22,24,26,28,30]
+# ~ for tf in tfs:
+    # ~ print(f"TF {tf}" )
+    # ~ model = ld_o.LDMLT(tf, cycle, alphafactor)
+    # ~ model.fit(TRAIN_X,TRAIN_Y)
+    # ~ Y_pred = model.predict(TEST_X, k)
+    # ~ acc = accuracy_score(TEST_Y, Y_pred)
+    # ~ res = res + f"{tf} {acc:.3f}\n"
+    # ~ print(res)
+# ~ resf = open("results_tf.txt", "w")
+# ~ resf.write(res)
+# ~ resf.close()
+# ~ tripletsfactor = 10
+# ~ alphas = [2,3,4,5,6,7,8,9,10]
+# ~ res = ""
+# ~ for a in alphas:
+    # ~ print(f"ALPHA {a}" )
+    # ~ model = ld_o.LDMLT(tripletsfactor, cycle, a)
+    # ~ model.fit(TRAIN_X,TRAIN_Y)
+    # ~ Y_pred = model.predict(TEST_X, k)
+    # ~ acc = accuracy_score(TEST_Y, Y_pred)
+    # ~ res = res + f"{a} {acc:.3f}\n"
+    # ~ print(res)
+# ~ resf = open("results_alpha.txt", "w")
+# ~ resf.write(res)
+# ~ resf.close()
+
+# ~ tripletsfactor = 10
+# ~ alphafactor = 9
+# ~ cycles = [10,12,14,16,18,20,22,24,26,28,30]
+# ~ res = ""
+# ~ for c in cycles:
+    # ~ print(f"cycle {c}" )
+    # ~ model = ld_o.LDMLT(tripletsfactor, c, alphafactor)
+    # ~ model.fit(TRAIN_X,TRAIN_Y)
+    # ~ Y_pred = model.predict(TEST_X, k)
+    # ~ acc = accuracy_score(TEST_Y, Y_pred)
+    # ~ res = res + f"{c} {acc:.3f}\n"
+    # ~ print(res)
+# ~ resf = open("results_cycle.txt", "w")
+# ~ resf.write(res)
+# ~ resf.close()
+
+tripletsfactor = 20
+alphafactor = 9
+cycles = 18
+model = ld_o.LDMLT(tripletsfactor, cycles, alphafactor)
+model.fit(TRAIN_X, TRAIN_Y)
+ks = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+res = ""
+for k in ks:
+    print(f"k: {k}")
+    Y_pred = model.predict(TEST_X, k)
+    acc = accuracy_score(TEST_Y, Y_pred)
+    res = res + f"{k} {acc:.3f}\n"
+    print(res)
+resf = open("results_k.txt", "w")
+resf.write(res)
+resf.close()
+    
+    
 
