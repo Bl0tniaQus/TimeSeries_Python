@@ -13,11 +13,14 @@ warnings.filterwarnings('ignore')
 
 
 
-
 TRAIN_X = loadmat('../data/MSRA_I_TRAIN_X.mat')
 TRAIN_Y = loadmat('../data/MSRA_I_TRAIN_Y.mat')
 TEST_X = loadmat('../data/MSRA_I_TEST_X.mat')
 TEST_Y = loadmat('../data/MSRA_I_TEST_Y.mat')
+# ~ TRAIN_X = loadmat('../data/KARD_TRAIN_X.mat')
+# ~ TRAIN_Y = loadmat('../data/KARD_TRAIN_Y.mat')
+# ~ TEST_X = loadmat('../data/KARD_TEST_X.mat')
+# ~ TEST_Y = loadmat('../data/KARD_TEST_Y.mat')
 # ~ TRAIN_X = loadmat('../data/FLORENCE_TRAIN_X.mat')
 # ~ TRAIN_Y = loadmat('../data/FLORENCE_TRAIN_Y.mat')
 # ~ TEST_X = loadmat('../data/FLORENCE_TEST_X.mat')
@@ -27,8 +30,11 @@ TRAIN_Y = np.array(TRAIN_Y['TRAIN_Y'].flat)
 TEST_X = np.array(TEST_X['TEST_X'].flat)
 TEST_Y = np.array(TEST_Y['TEST_Y'].flat)
 
-t = []
-t_o = []
+
+
+
+# ~ t = []
+# ~ t_o = []
 # ~ n = 1
 # ~ for i in range(n):
     # ~ model = ld.LDMLT(20,cycles,5)
@@ -52,10 +58,10 @@ t_o = []
     # ~ Y_pred = model.predict(TEST_X, k)  # classification
     # ~ accuracy = accuracy_score(TEST_Y, Y_pred)
     # ~ print(f"k = {k}; acc: {accuracy:.3f}")
-tripletsfactor = 20
-cycle = 15 
-alphafactor = 5
-k = 1
+# ~ tripletsfactor = 20
+# ~ cycle = 15 
+# ~ alphafactor = 5
+# ~ k = 1
 # ~ res = ""
 # ~ tfs = [10,12,14,16,18,20,22,24,26,28,30]
 # ~ for tf in tfs:
@@ -100,22 +106,37 @@ k = 1
 # ~ resf.write(res)
 # ~ resf.close()
 
-tripletsfactor = 20
+# ~ tripletsfactor = 20
+# ~ alphafactor = 9
+# ~ cycles = 18
+# ~ model = ld_o.LDMLT(tripletsfactor, cycles, alphafactor)
+# ~ model.fit(TRAIN_X, TRAIN_Y)
+# ~ ks = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+# ~ res = ""
+# ~ for k in ks:
+    # ~ print(f"k: {k}")
+    # ~ Y_pred = model.predict(TEST_X, k)
+    # ~ acc = accuracy_score(TEST_Y, Y_pred)
+    # ~ res = res + f"{k} {acc:.3f}\n"
+    # ~ print(res)
+# ~ resf = open("results_k.txt", "w")
+# ~ resf.write(res)
+# ~ resf.close()
+    
+tripletsfactor = 10
 alphafactor = 9
 cycles = 18
-model = ld_o.LDMLT(tripletsfactor, cycles, alphafactor)
-model.fit(TRAIN_X, TRAIN_Y)
-ks = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
-res = ""
-for k in ks:
-    print(f"k: {k}")
-    Y_pred = model.predict(TEST_X, k)
-    acc = accuracy_score(TEST_Y, Y_pred)
-    res = res + f"{k} {acc:.3f}\n"
-    print(res)
-resf = open("results_k.txt", "w")
-resf.write(res)
-resf.close()
-    
-    
+k = 10
+n_test = len(TEST_X)
+# ~ model = ld.LDMLT(tripletsfactor, cycles, alphafactor)
+# ~ start = time.time()
+# ~ model.fit(TRAIN_X, TRAIN_Y)
+# ~ end = time.time()
+# ~ train_time = end - start
+# ~ start = time.time()
+# ~ Y_pred = model.predict(TEST_X, k)
+# ~ end = time.time()
+# ~ test_time = (end - start) / n_test
+# ~ accuracy = accuracy_score(TEST_Y, Y_pred)
+# ~ print(f"UNOPTIMISED - Acc: {accuracy:.4f}; Train time: {train_time}; Test time: {test_time}")
 

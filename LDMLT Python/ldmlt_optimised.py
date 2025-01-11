@@ -9,15 +9,15 @@ class LDMLT:
         self.M = None
         self.X = None
         self.Y = None
-    def DTW(self, MTS_1, MTS_2, M, distOnly = False):
+    def DTW(self, MTS_1, MTS_2, distOnly = False):
         MTS_1 = MTS_1.T
         MTS_2 = MTS_2.T
         _, col_1 = MTS_1.shape
         row, col_2 = MTS_2.shape
         d = np.zeros((col_1, col_2))
-        D1 = MTS_1.T @ M @ MTS_1
-        D2 = MTS_2.T @ M @ MTS_2
-        D3 = MTS_1.T @ M @ MTS_2
+        D1 = MTS_1.T @ self.M @ MTS_1
+        D2 = MTS_2.T @ self.M @ MTS_2
+        D3 = MTS_1.T @ self.M @ MTS_2
         d = np.array([[D1[i, i] + D2[j, j] - 2 * D3[i, j] for j in range(col_2)] for i in range(col_1)])
         D = np.zeros_like(d)
         for m in range(col_1):
@@ -71,7 +71,7 @@ class LDMLT:
         for index_test in range(n_test):
             Distance = np.zeros(n_train)
             for index_train in range(n_train):
-                Dist, _, _= self.DTW(self.X[index_train], X[index_test], self.M, distOnly = True)
+                Dist, _, _= self.DTW(self.X[index_train], X[index_test], distOnly = True)
                 Distance[index_train] = Dist
             Inds = np.argsort(Distance,stable=True)
             
@@ -94,7 +94,7 @@ class LDMLT:
         num_features = len(self.X[0][0])
         triplets_factor = self.triplets_factor
         # The Mahalanobis matrix M starts from identity matrix
-        M = np.eye(num_features, num_features)
+        self.M = np.eye(num_features, num_features)
         # Get all the labels of the data
         Y_kind = np.unique(self.Y)
         X_n, Y_n = self.dataRank(self.X, self.Y, Y_kind)
@@ -105,15 +105,15 @@ class LDMLT:
                 if Y_n[i] == Y_n[j]:
                     S[i, j] = 1
         
-        Triplet, rho, Error_old = self.selectTriplets(X_n, triplets_factor, M, Y_n, S)
+        Triplet, rho, Error_old = self.selectTriplets(X_n, triplets_factor, Y_n, S)
         
         iter_count = len(Triplet)
         total_iter = iter_count
         for i in range(self.cycles):
             alpha = self.alpha_factor / iter_count
             rho = 0
-            M = self.updateM(M, X_n, Triplet, alpha, rho)
-            Triplet, rho, Error_new = self.selectTriplets(X_n, triplets_factor, M, Y_n, S)
+            self.updateM(X_n, Triplet, alpha, rho)
+            Triplet, rho, Error_new = self.selectTriplets(X_n, triplets_factor, Y_n, S)
             iter_count = len(Triplet)
             total_iter += iter_count
             triplets_factor = Error_new / Error_old * triplets_factor
@@ -122,9 +122,8 @@ class LDMLT:
                 break
             Error_old = Error_new
             print('finished cycle: ', i)
-        self.M = M
-    def updateM(self, M, X, triplet, gamma, rho):
-        M = M / np.trace(M)
+    def updateM(self, X, triplet, gamma, rho):
+        self.M = self.M / np.trace(self.M)
         i = 0
         options = np.zeros(5)
         options[4] = 1
@@ -132,23 +131,22 @@ class LDMLT:
             i1 = triplet[i, 0]
             i2 = triplet[i, 1]
             i3 = triplet[i, 2]
-            Dist1, swi1, swi2 = self.DTW(X[i1], X[i2], M)
+            Dist1, swi1, swi2 = self.DTW(X[i1], X[i2])
             P = swi1 - swi2
-            Dist2, swi1, swi3 = self.DTW(X[i1], X[i3], M)
+            Dist2, swi1, swi3 = self.DTW(X[i1], X[i3])
             Q = swi1 - swi3
             IP = np.eye(P.shape[1])
             IQ = np.eye(Q.shape[1])
         
             if Dist2 - Dist1 < rho:
-                alpha = gamma / np.trace(np.linalg.inv(np.eye(M.shape[0]) - M) @ M @ Q @ Q.T)
-                M_temp = M - alpha * M @ P @ np.linalg.inv(IP + alpha * P.T @ M @ P) @ P.T @ M
-                M = M_temp + alpha * M_temp @ Q @ np.linalg.inv(IQ - alpha * Q.T @ M_temp @ Q) @ Q.T @ M_temp
-                L, S, R = svd(M)
-                M = M / np.sum(np.diag(S))
-                M = M / np.trace(M)
-
+                alpha = gamma / np.trace(np.linalg.inv(np.eye(self.M.shape[0]) - self.M) @ self.M @ Q @ Q.T)
+                M_temp = self.M - alpha * self.M @ P @ np.linalg.inv(IP + alpha * P.T @ self.M @ P) @ P.T @ self.M
+                self.M = M_temp + alpha * M_temp @ Q @ np.linalg.inv(IQ - alpha * Q.T @ M_temp @ Q) @ Q.T @ M_temp
+                L, S, R = svd(self.M)
+                self.M = self.M / np.sum(np.diag(S))
+                self.M = self.M / np.trace(self.M)
             i += 1
-        return M * M.shape[0]
+        self.M = self.M * self.M.shape[0]
     def dataRank(self, X, Y, Y_kind):
         X_data = []
         Y_data = []
@@ -157,7 +155,7 @@ class LDMLT:
             X_data.extend([X[i] for i in index])
             Y_data.extend([Y[i] for i in index])
         return X_data, Y_data
-    def orderCheck(self, X, M, Y):
+    def orderCheck(self, X, Y):
         numberCandidate = len(X)
         compactfactor = 2
         Y_kind = np.sort(np.unique(Y))
@@ -187,7 +185,7 @@ class LDMLT:
         #TODO możliwa optymalizacja
         for i in range(len(map_vector_kind)):
             for j in range(i, len(map_vector_kind)):
-                Dist, _, _ = self.DTW(X[map_vector_kind[i]], X[map_vector_kind[j]], M, distOnly = True)
+                Dist, _, _ = self.DTW(X[map_vector_kind[i]], X[map_vector_kind[j]], distOnly = True)
                 Distance[i, j] = Dist
                 Distance[j, i] = Dist
         Disorder = np.zeros(numberCandidate)
@@ -214,12 +212,12 @@ class LDMLT:
                 Distance_Extended[np.ix_(index_i,index_j)] = Distance[i, j]
                 Distance_Extended[np.ix_(index_j,index_i)] = Distance[j, i]
         return Distance_Extended, Disorder
-    def selectTriplets(self, X, factor, Mt, Y, S):
+    def selectTriplets(self, X, factor, Y, S):
         bias = 3
         numberCandidate = len(X)
         triplet = []
 
-        Distance, Disorder = self.orderCheck(X, Mt, Y)
+        Distance, Disorder = self.orderCheck(X, Y)
         # Compute the parameter rho
         f, c = np.histogram(Distance, bins=100)
         #??

@@ -41,7 +41,7 @@ class DelayEmbedding:
         for i in self.classLabels:
             self.Trans[i] = self.Trans_Prob(self.Trans[i])
     def predict(self, X):
-        X_test = X.copy()
+        X_test = [np.array(X[i].copy()) for i in range(len(X))]
         if len(X_test[0].shape) == 1:
             X_test = np.array([X_test])
         predictions = [0 for i in range(len(X_test))]
@@ -64,8 +64,15 @@ class DelayEmbedding:
             
             
     def HDist(self, points, Trans, i, alpha=1.0, beta=1.0):
+        
+        p = Trans.shape[0]
+        if p == 0:
+            raise ValueError('Transition list is empty. Probably method arguments are invalid.')
+        
         m, n = points.shape
-        p, _ = Trans.shape
+        if m ==0:
+            return np.nan
+        
         if self.Grid is not None:
             gridCenter = self.Grid['center']
             gridSize = self.Grid['size']
@@ -80,12 +87,13 @@ class DelayEmbedding:
         loc_points = (points[1:, :] + points[:-1, :]) / 2
         len_points = np.sqrt(np.sum(vec_points**2, axis=1))
         # normalized angle between learned transitions and given trajectory
-        norm_angle = np.exp(np.real(np.arccos(vec_points @ vec_Trans.T / 
-                                               (len_points[:, None] * len_Trans[None, :])))
-                              )
-        
-        if np.sum(len_points == 0) > 0 and  np.sum(len_Trans == 0):
-            norm_angle[len_points == 0, len_Trans == 0] = 0
+        norm_angle = np.exp(np.real(np.arccos(vec_points @ vec_Trans.T / (np.outer(len_points, len_Trans)))))
+        if np.sum(len_points == 0) > 0 and  np.sum(len_Trans == 0) > 0:
+            ag_lp = np.argwhere(len_points == 0)
+            ag_T = np.argwhere(len_Trans == 0)
+            for i in ag_lp:
+                for j in ag_T:
+                    norm_angle[i, j] = 0
         # normalized length difference
         norm_length = np.exp((np.tile(len_points[:, None], (1, p)) - 
                                np.tile(len_Trans[None, :], (m-1, 1)))**2 / 
@@ -108,7 +116,10 @@ class DelayEmbedding:
         l = C.shape[0]
         counts = np.bincount(ic, minlength=l)
         prob = counts / counts.sum()
-        Trans = np.hstack((C, prob[:, np.newaxis]))
+        if len(Trans) != 0:
+            Trans = np.hstack((C, prob[:, np.newaxis]))
+        else:
+            return np.array(Trans)
         return Trans
     def add2Trans(self, points, Trans):
         if self.Grid is not None:
