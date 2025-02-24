@@ -87,41 +87,53 @@ class LDMLT:
             Pred_Y = Pred_Y[0]
         return Pred_Y
         
-    def fit(self, X, Y):
+    def fit(self, X, Y, M = None):
+        passed_M = True
+        try:
+            _ = M.shape
+        except:
+            passed_M = False
+        
         self.X = [np.array(X[i].copy()) for i in range(len(X))]
         self.Y = Y.copy()
-        num_candidates = len(self.X)
-        num_features = len(self.X[0][0])
-        triplets_factor = self.triplets_factor
-        # The Mahalanobis matrix M starts from identity matrix
-        self.M = np.eye(num_features, num_features)
-        # Get all the labels of the data
-        Y_kind = np.unique(self.Y)
-        X_n, Y_n = self.dataRank(self.X, self.Y, Y_kind)
-        # S record whether dissimilar or not
-        S = np.zeros((num_candidates, num_candidates))
-        for i in range(num_candidates):
-            for j in range(num_candidates):
-                if Y_n[i] == Y_n[j]:
-                    S[i, j] = 1
-        
-        Triplet, rho, Error_old = self.selectTriplets(X_n, triplets_factor, Y_n, S)
-        
-        iter_count = len(Triplet)
-        total_iter = iter_count
-        for i in range(self.cycles):
-            alpha = self.alpha_factor / iter_count
-            rho = 0
-            self.updateM(X_n, Triplet, alpha, rho)
-            Triplet, rho, Error_new = self.selectTriplets(X_n, triplets_factor, Y_n, S)
+        if not passed_M:
+            num_candidates = len(self.X)
+            num_features = len(self.X[0][0])
+            triplets_factor = self.triplets_factor
+            # The Mahalanobis matrix M starts from identity matrix
+            self.M = np.eye(num_features, num_features)
+            # Get all the labels of the data
+            Y_kind = np.unique(self.Y)
+            X_n, Y_n = self.dataRank(self.X, self.Y, Y_kind)
+            # S record whether dissimilar or not
+            S = np.zeros((num_candidates, num_candidates))
+            for i in range(num_candidates):
+                for j in range(num_candidates):
+                    if Y_n[i] == Y_n[j]:
+                        S[i, j] = 1
+            
+            Triplet, rho, Error_old = self.selectTriplets(X_n, triplets_factor, Y_n, S)
+            
             iter_count = len(Triplet)
-            total_iter += iter_count
-            triplets_factor = Error_new / Error_old * triplets_factor
-            cov = (Error_old - Error_new) / Error_old
-            if abs(cov) < 10e-5:
-                break
-            Error_old = Error_new
-            print('finished cycle: ', i)
+            total_iter = iter_count
+            for i in range(self.cycles):
+                alpha = self.alpha_factor / iter_count
+                rho = 0
+                self.updateM(X_n, Triplet, alpha, rho)
+                Triplet, rho, Error_new = self.selectTriplets(X_n, triplets_factor, Y_n, S)
+                iter_count = len(Triplet)
+                total_iter += iter_count
+                triplets_factor = Error_new / Error_old * triplets_factor
+                cov = (Error_old - Error_new) / Error_old
+                if abs(cov) < 10e-5:
+                    break
+                Error_old = Error_new
+                print('finished cycle: ', i)
+        else:
+            if M.shape[0] == X[0].shape[1]:
+                self.M = M.copy()
+            else:
+                raise ValueError("Invalid M Size")
     def updateM(self, X, triplet, gamma, rho):
         self.M = self.M / np.trace(self.M)
         i = 0
@@ -247,4 +259,9 @@ class LDMLT:
             else:
                 triplet = np.concatenate((triplet, new_triplet), axis=0)
         return triplet, rho, error
-
+    def saveM(self, filename, delimiter = " "):
+        np.savetxt(filename, self.M, delimiter = delimiter) 
+    @staticmethod
+    def loadM(filename, delimiter = " "):
+        M = np.loadtxt(filename, delimiter = delimiter)
+        return M

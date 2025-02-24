@@ -6,18 +6,38 @@ import scipy.io as sio
 import time
 
 
-TRAIN_X = loadmat('../data/MSRA_I_TRAIN_X.mat')
-TRAIN_Y = loadmat('../data/MSRA_I_TRAIN_Y.mat')
-TEST_X = loadmat('../data/MSRA_I_TEST_X.mat')
-TEST_Y = loadmat('../data/MSRA_I_TEST_Y.mat')
-# ~ TRAIN_X = loadmat('../data/FLORENCE_TRAIN_X.mat')
-# ~ TRAIN_Y = loadmat('../data/FLORENCE_TRAIN_Y.mat')
-# ~ TEST_X = loadmat('../data/FLORENCE_TEST_X.mat')
-# ~ TEST_Y = loadmat('../data/FLORENCE_TEST_Y.mat')
+# ~ TRAIN_X = loadmat('../data/MSRA_I_TRAIN_X.mat')
+# ~ TRAIN_Y = loadmat('../data/MSRA_I_TRAIN_Y.mat')
+# ~ TEST_X = loadmat('../data/MSRA_I_TEST_X.mat')
+# ~ TEST_Y = loadmat('../data/MSRA_I_TEST_Y.mat')
 # ~ TRAIN_X = loadmat('../data/KARD_TRAIN_X.mat')
 # ~ TRAIN_Y = loadmat('../data/KARD_TRAIN_Y.mat')
 # ~ TEST_X = loadmat('../data/KARD_TEST_X.mat')
 # ~ TEST_Y = loadmat('../data/KARD_TEST_Y.mat')
+# ~ TRAIN_X = loadmat('../data/FLORENCE_TRAIN_X.mat')
+# ~ TRAIN_Y = loadmat('../data/FLORENCE_TRAIN_Y.mat')
+# ~ TEST_X = loadmat('../data/FLORENCE_TEST_X.mat')
+# ~ TEST_Y = loadmat('../data/FLORENCE_TEST_Y.mat')
+TRAIN_X = loadmat('../data/MSRA_II_TRAIN_X.mat')
+TRAIN_Y = loadmat('../data/MSRA_II_TRAIN_Y.mat')
+TEST_X = loadmat('../data/MSRA_II_TEST_X.mat')
+TEST_Y = loadmat('../data/MSRA_II_TEST_Y.mat')
+# ~ TRAIN_X = loadmat('../data/MSRA_III_TRAIN_X.mat')
+# ~ TRAIN_Y = loadmat('../data/MSRA_III_TRAIN_Y.mat')
+# ~ TEST_X = loadmat('../data/MSRA_III_TEST_X.mat')
+# ~ TEST_Y = loadmat('../data/MSRA_III_TEST_Y.mat')
+# ~ TRAIN_X = loadmat('../data/UTD_TRAIN_X.mat')
+# ~ TRAIN_Y = loadmat('../data/UTD_TRAIN_Y.mat')
+# ~ TEST_X = loadmat('../data/UTD_TEST_X.mat')
+# ~ TEST_Y = loadmat('../data/UTD_TEST_Y.mat')
+# ~ TRAIN_X = loadmat('../data/UTK_TRAIN_X.mat')
+# ~ TRAIN_Y = loadmat('../data/UTK_TRAIN_Y.mat')
+# ~ TEST_X = loadmat('../data/UTK_TEST_X.mat')
+# ~ TEST_Y = loadmat('../data/UTK_TEST_Y.mat')
+# ~ TRAIN_X = loadmat('../data/SYSU_TRAIN_X.mat')
+# ~ TRAIN_Y = loadmat('../data/SYSU_TRAIN_Y.mat')
+# ~ TEST_X = loadmat('../data/SYSU_TEST_X.mat')
+# ~ TEST_Y = loadmat('../data/SYSU_TEST_Y.mat')
 TRAIN_X = np.array(TRAIN_X['TRAIN_X'].flat)
 TRAIN_Y = np.array(TRAIN_Y['TRAIN_Y'].flat)
 TEST_X = np.array(TEST_X['TEST_X'].flat)
@@ -131,34 +151,34 @@ n_test = len(TEST_X)
 # ~ resf.write(res)
 # ~ resf.close()
 
-DE_step = 5
-DE_dim = 2
-DE_slid = 2
-alpha = 2
-beta = 2
-gs = 0.1
-fs = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
-res = ""
-for f in fs:
-    model = DE.DelayEmbedding(DE_step, DE_dim, DE_slid, alpha, beta, gs, f)
-    model.fit(TRAIN_X,TRAIN_Y)
-    Y_pred = model.predict(TEST_X)
-    acc = accuracy_score(TEST_Y, Y_pred)
-    res = res + f"{f} {acc:.3f}\n"
-    print(res)
-resf = open("results_filter.txt", "w")
-resf.write(res)
-resf.close()
+# ~ DE_step = 5
+# ~ DE_dim = 2
+# ~ DE_slid = 2
+# ~ alpha = 2
+# ~ beta = 2
+# ~ gs = 0.1
+# ~ fs = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+# ~ res = ""
+# ~ for f in fs:
+    # ~ model = DE.DelayEmbedding(DE_step, DE_dim, DE_slid, alpha, beta, gs, f)
+    # ~ model.fit(TRAIN_X,TRAIN_Y)
+    # ~ Y_pred = model.predict(TEST_X)
+    # ~ acc = accuracy_score(TEST_Y, Y_pred)
+    # ~ res = res + f"{f} {acc:.3f}\n"
+    # ~ print(res)
+# ~ resf = open("results_filter.txt", "w")
+# ~ resf.write(res)
+# ~ resf.close()
 
 
-# ~ model = DE.DelayEmbedding(DE_step = 5, DE_dim = 2, DE_slid = 2, alpha = 2, beta = 2, grid_size = 0.1, filter_param = 0.5)
-# ~ start = time.time()
-# ~ model.fit(TRAIN_X, TRAIN_Y)
-# ~ end = time.time()
-# ~ train_time = end - start
-# ~ start = time.time()
-# ~ Y_pred = model.predict(TEST_X)
-# ~ end = time.time()
-# ~ test_time = (end - start) / n_test
-# ~ accuracy = accuracy_score(TEST_Y, Y_pred)
-# ~ print(f"Acc: {accuracy:.4f}; Train time: {train_time}; Test time: {test_time}")
+model = DE.DelayEmbedding(DE_step = 5, DE_dim = 2, DE_slid = 2, alpha = 2, beta = 2, grid_size = 0.1, filter_param = 0.5)
+start = time.time()
+model.fit(TRAIN_X, TRAIN_Y)
+end = time.time()
+train_time = end - start
+start = time.time()
+Y_pred = model.predict(TEST_X)
+end = time.time()
+test_time = (end - start) / n_test
+accuracy = accuracy_score(TEST_Y, Y_pred)
+print(f"Acc: {accuracy:.4f}; Train time: {train_time}; Test time: {test_time}")
