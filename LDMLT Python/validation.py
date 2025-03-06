@@ -51,8 +51,6 @@ TEST_X = np.array(TEST_X['TEST_X'].flat)
 TEST_Y = np.array(TEST_Y['TEST_Y'].flat)
 
 
-
-
 # ~ t = []
 # ~ t_o = []
 # ~ n = 1
@@ -78,6 +76,8 @@ TEST_Y = np.array(TEST_Y['TEST_Y'].flat)
     # ~ Y_pred = model.predict(TEST_X, k)  # classification
     # ~ accuracy = accuracy_score(TEST_Y, Y_pred)
     # ~ print(f"k = {k}; acc: {accuracy:.3f}")
+    
+    
 # ~ tripletsfactor = 20
 # ~ cycle = 15 
 # ~ alphafactor = 5
