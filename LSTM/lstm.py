@@ -21,28 +21,25 @@ class LSTM(torch.nn.Module):
         self.n_classes = n_classes
         self.bilstm = bilstm
         self.lr = lr
-        self.lstm = torch.nn.LSTM(n_features, hidden_size, bidirectional=bilstm, batch_first = True)
+        self.lstm = torch.nn.LSTM(n_features, hidden_size, bidirectional=bilstm)
         self.linear = torch.nn.Linear(hidden_size * (1+self.bilstm), n_classes)
-        self.softmax = torch.nn.Softmax(dim = 0)
-    def forward(self, x, h0 = None, c0 = None):
-        if h0 is None or c0 is None:
-            h0 = torch.zeros(1+self.bilstm,self.hidden_size)
-            c0 = torch.zeros(1+self.bilstm,self.hidden_size)
-        out, (hn, cn) = self.lstm(x, (h0, c0))
-        out = self.linear(out[-1, :])
-        out = self.softmax(out)
-        return out, hn, cn
+        #self.softmax = torch.nn.Softmax(dim = 0)
+    def forward(self, x):
+        out = self.lstm(x)[0][-1]
+        out = self.linear(out)
+        #out = self.softmax(out)
+        return out
     def predict(self, x):
-        out, _, _ = self.forward(x)
+        out = self.forward(x)
         pred = np.argmax(out.detach().numpy())
         return pred
     def fit(self, x_train, y_train, n_epoch):
         self.losses = []
         self.x = x_train
         self.y = y_train
-        h0, c0 = None, None
         loss_function = torch.nn.MSELoss()
         optimizer = torch.optim.Adam(self.parameters(), lr = self.lr)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 1/32)
         for n in range(n_epoch):
             epoch_losses = []
             ids = np.arange(len(self.x))
@@ -51,14 +48,12 @@ class LSTM(torch.nn.Module):
                 idx = ids[i]
                 x = self.x[idx]
                 y = self.y[idx]
-                outputs, h0, c0 = self.forward(x, h0, c0)
+                optimizer.zero_grad()
+                outputs= self.forward(x)
                 loss = loss_function(outputs, y)
                 epoch_losses.append(loss.detach().numpy())
-                optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
-                h0 = h0.detach()
-                c0 = c0.detach()
             self.losses.append(sum(epoch_losses) / len(epoch_losses))
             
 
@@ -113,31 +108,42 @@ n_test = len(TEST_X)
 TRAIN_X_tensor = tensorify(TRAIN_X)
 TEST_X_tensor = tensorify(TEST_X)
 TRAIN_Y_tensor = tensorify(TRAIN_Y)
+# ~ TRAIN_Y_tensor = torch.from_numpy(TRAIN_Y)
 
-learning_rate = 0.0002
-n_epoch = 175
-
+learning_rate = 0.0005
+n_epoch = 150
 start = time.time()
 model = LSTM(n_features, n_train*3, n_classes, learning_rate, False)
 model.fit(TRAIN_X_tensor, TRAIN_Y_tensor, n_epoch)
 end = time.time()
 train_time = end - start
 start = time.time()
+model.eval()
 predictions = [model.predict(TEST_X_tensor[i]) for i in range(n_test)]
 end = time.time()
 test_time = (end - start) / n_test
 accuracy = accuracy_score(TEST_Y, predictions)
 print(f"LSTM - Acc: {accuracy:.4f}; Train time: {train_time}; Test time: {test_time}")
 
+# ~ learning_rate = 0.00015
+# ~ n_epoch = 200
+
+
 start = time.time()
-model = LSTM(n_features, n_train*3, n_classes, learning_rate, True)
-model.fit(TRAIN_X_tensor, TRAIN_Y_tensor, n_epoch)
+model2 = LSTM(n_features, n_train*3, n_classes, learning_rate, True)
+model2.fit(TRAIN_X_tensor, TRAIN_Y_tensor, n_epoch)
 end = time.time()
 train_time = end - start
 start = time.time()
-predictions = [model.predict(TEST_X_tensor[i]) for i in range(n_test)]
+model2.eval()
+predictions = [model2.predict(TEST_X_tensor[i]) for i in range(n_test)]
 end = time.time()
 test_time = (end - start) / n_test
 accuracy = accuracy_score(TEST_Y, predictions)
 print(f"BILSTM - Acc: {accuracy:.4f}; Train time: {train_time}; Test time: {test_time}")
+
+plt.plot(model.losses)
+plt.show()
+plt.plot(model2.losses)
+plt.show()
 

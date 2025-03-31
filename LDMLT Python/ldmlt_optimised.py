@@ -60,6 +60,10 @@ class LDMLT:
         for i in range(row):
             MTS_E1[i, :] = MTS_1[i, w[:, 0].astype(int)]
             MTS_E2[i, :] = MTS_2[i, w[:, 1].astype(int)]
+        print(w)
+        print(f"{MTS_1.shape} {MTS_E1.shape}")
+        print(f"{MTS_2.shape} {MTS_E2.shape}")
+        a = input()
         return Dist, MTS_E1, MTS_E2
     def predict(self, X, k = 3):
         if len(X[0].shape) == 1:
@@ -228,7 +232,6 @@ class LDMLT:
         bias = 3
         numberCandidate = len(X)
         triplet = []
-
         Distance, Disorder = self.orderCheck(X, Y)
         # Compute the parameter rho
         f, c = np.histogram(Distance, bins=100)

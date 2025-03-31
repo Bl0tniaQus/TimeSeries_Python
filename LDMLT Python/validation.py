@@ -150,17 +150,17 @@ k = 10
 n_test = len(TEST_X)
 n_train = len(TRAIN_X)
 print(f"n_test: {n_test}; n_train: {n_train}")
-model = ld.LDMLT(tripletsfactor, cycles, alphafactor)
-start = time.time()
-model.fit(TRAIN_X, TRAIN_Y)
-end = time.time()
-train_time = end - start
-start = time.time()
-Y_pred = model.predict(TEST_X, k)
-end = time.time()
-test_time = (end - start) / n_test
-accuracy = accuracy_score(TEST_Y, Y_pred)
-print(f"UNOPTIMISED - Acc: {accuracy:.4f}; Train time: {train_time}; Test time: {test_time}")
+# ~ model = ld.LDMLT(tripletsfactor, cycles, alphafactor)
+# ~ start = time.time()
+# ~ model.fit(TRAIN_X, TRAIN_Y)
+# ~ end = time.time()
+# ~ train_time = end - start
+# ~ start = time.time()
+# ~ Y_pred = model.predict(TEST_X, k)
+# ~ end = time.time()
+# ~ test_time = (end - start) / n_test
+# ~ accuracy = accuracy_score(TEST_Y, Y_pred)
+# ~ print(f"UNOPTIMISED - Acc: {accuracy:.4f}; Train time: {train_time}; Test time: {test_time}")
 
 model = ld_o.LDMLT(tripletsfactor, cycles, alphafactor)
 start = time.time()
