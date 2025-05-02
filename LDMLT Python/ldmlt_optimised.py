@@ -194,7 +194,6 @@ class LDMLT:
             S[i,i] = 1
         
         Distance = np.zeros((map_vector_kind_length,map_vector_kind_length))
-        #TODO możliwa optymalizacja
         for i in range(len(map_vector_kind)):
             for j in range(i, len(map_vector_kind)):
                 Dist, _, _ = self.DTW(X[map_vector_kind[i]], X[map_vector_kind[j]], distOnly = True)
