@@ -40,6 +40,7 @@ class DelayEmbedding:
             self.Trans[y] = self.add2Trans(point_cloud, self.Trans[y])
         for i in self.classLabels:
             self.Trans[i] = self.Trans_Prob(self.Trans[i])
+        
     def predict(self, X):
         X_test = [np.array(X[i].copy()) for i in range(len(X))]
         if len(X_test[0].shape) == 1:
@@ -139,7 +140,6 @@ class DelayEmbedding:
                 Trans = np.vstack((Trans, temp))
             else:
                 Trans = temp
-        
         return Trans
 
     def delay_embedding(self, x, dim=2, step=1, w=1):

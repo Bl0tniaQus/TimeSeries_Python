@@ -13,10 +13,10 @@ warnings.filterwarnings('ignore')
 
 
 
-TRAIN_X = loadmat('../data/MSRA_I_TRAIN_X.mat')
-TRAIN_Y = loadmat('../data/MSRA_I_TRAIN_Y.mat')
-TEST_X = loadmat('../data/MSRA_I_TEST_X.mat')
-TEST_Y = loadmat('../data/MSRA_I_TEST_Y.mat')
+# ~ TRAIN_X = loadmat('../data/MSRA_I_TRAIN_X.mat')
+# ~ TRAIN_Y = loadmat('../data/MSRA_I_TRAIN_Y.mat')
+# ~ TEST_X = loadmat('../data/MSRA_I_TEST_X.mat')
+# ~ TEST_Y = loadmat('../data/MSRA_I_TEST_Y.mat')
 # ~ TRAIN_X = loadmat('../data/KARD_TRAIN_X.mat')
 # ~ TRAIN_Y = loadmat('../data/KARD_TRAIN_Y.mat')
 # ~ TEST_X = loadmat('../data/KARD_TEST_X.mat')
@@ -33,10 +33,10 @@ TEST_Y = loadmat('../data/MSRA_I_TEST_Y.mat')
 # ~ TRAIN_Y = loadmat('../data/MSRA_III_TRAIN_Y.mat')
 # ~ TEST_X = loadmat('../data/MSRA_III_TEST_X.mat')
 # ~ TEST_Y = loadmat('../data/MSRA_III_TEST_Y.mat')
-# ~ TRAIN_X = loadmat('../data/UTD_TRAIN_X.mat')
-# ~ TRAIN_Y = loadmat('../data/UTD_TRAIN_Y.mat')
-# ~ TEST_X = loadmat('../data/UTD_TEST_X.mat')
-# ~ TEST_Y = loadmat('../data/UTD_TEST_Y.mat')
+TRAIN_X = loadmat('../data/UTD_TRAIN_X.mat')
+TRAIN_Y = loadmat('../data/UTD_TRAIN_Y.mat')
+TEST_X = loadmat('../data/UTD_TEST_X.mat')
+TEST_Y = loadmat('../data/UTD_TEST_Y.mat')
 # ~ TRAIN_X = loadmat('../data/UTK_TRAIN_X.mat')
 # ~ TRAIN_Y = loadmat('../data/UTK_TRAIN_Y.mat')
 # ~ TEST_X = loadmat('../data/UTK_TEST_X.mat')
@@ -78,23 +78,23 @@ TEST_Y = np.array(TEST_Y['TEST_Y'].flat)
     # ~ print(f"k = {k}; acc: {accuracy:.3f}")
     
     
-tripletsfactor = 20
-cycle = 15 
-alphafactor = 5
-k = 1
-res = ""
-tfs = [10,12,14,16,18,20,22,24,26,28,30]
-for tf in tfs:
-    print(f"TF {tf}" )
-    model = ld_o.LDMLT(tf, cycle, alphafactor)
-    model.fit(TRAIN_X,TRAIN_Y)
-    Y_pred = model.predict(TEST_X, k)
-    acc = accuracy_score(TEST_Y, Y_pred)
-    res = res + f"{tf} {acc:.3f}\n"
-    print(res)
-resf = open("results_tf.txt", "w")
-resf.write(res)
-resf.close()
+# ~ tripletsfactor = 20
+# ~ cycle = 15 
+# ~ alphafactor = 5
+# ~ k = 1
+# ~ res = ""
+# ~ tfs = [10,12,14,16,18,20,22,24,26,28,30]
+# ~ for tf in tfs:
+    # ~ print(f"TF {tf}" )
+    # ~ model = ld_o.LDMLT(tf, cycle, alphafactor)
+    # ~ model.fit(TRAIN_X,TRAIN_Y)
+    # ~ Y_pred = model.predict(TEST_X, k)
+    # ~ acc = accuracy_score(TEST_Y, Y_pred)
+    # ~ res = res + f"{tf} {acc:.3f}\n"
+    # ~ print(res)
+# ~ resf = open("results_tf.txt", "w")
+# ~ resf.write(res)
+# ~ resf.close()
 # ~ tripletsfactor = 10
 # ~ alphas = [2,3,4,5,6,7,8,9,10]
 # ~ res = ""
@@ -174,16 +174,16 @@ print(f"n_test: {n_test}; n_train: {n_train}")
 # ~ accuracy = accuracy_score(TEST_Y, Y_pred)
 # ~ print(f"OPTIMISED - Acc: {accuracy:.4f}; Train time: {train_time}; Test time: {test_time}")
 
-# ~ model = ld_o.LDMLT()
-# ~ M = ld_o.LDMLT.loadM("M_kard.txt")
-# ~ start = time.time()
-# ~ model.fit(TRAIN_X, TRAIN_Y, M)
-# ~ end = time.time()
-# ~ train_time = end - start
-# ~ start = time.time()
-# ~ Y_pred = model.predict(TEST_X, k)
-# ~ end = time.time()
-# ~ test_time = (end - start) / n_test
-# ~ accuracy = accuracy_score(TEST_Y, Y_pred)
-# ~ print(f"OPTIMISED - Acc: {accuracy:.4f}; Train time: {train_time}; Test time: {test_time}")
+model = ld_o.LDMLT()
+M = ld_o.LDMLT.loadM("M_UTD.txt")
+start = time.time()
+model.fit(TRAIN_X, TRAIN_Y, M)
+end = time.time()
+train_time = end - start
+start = time.time()
+Y_pred = model.predict(TEST_X, k)
+end = time.time()
+test_time = (end - start) / n_test
+accuracy = accuracy_score(TEST_Y, Y_pred)
+print(f"OPTIMISED - Acc: {accuracy:.4f}; Train time: {train_time}; Test time: {test_time}")
 

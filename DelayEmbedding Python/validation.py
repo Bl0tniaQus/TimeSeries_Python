@@ -44,7 +44,6 @@ TEST_X = np.array(TEST_X['TEST_X'].flat)
 TEST_Y = np.array(TEST_Y['TEST_Y'].flat)
 n_test = len(TEST_X)
 
-
 # ~ model = DE.DelayEmbedding(DE_step = 5, DE_dim = 2, DE_slid = 2, alpha = 2, beta = 2, grid_size = 0.1, filter_param = 0.5)
 # ~ start = time.time()
 # ~ model.fit(TRAIN_X, TRAIN_Y)
