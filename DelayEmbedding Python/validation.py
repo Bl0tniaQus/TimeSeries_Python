@@ -170,7 +170,7 @@ n_test = len(TEST_X)
 # ~ resf.close()
 
 
-model = DE.DelayEmbedding(DE_step = 5, DE_dim = 2, DE_slid = 2, alpha = 2, beta = 2, grid_size = 0.1, filter_param = 0.5)
+model = DE.DelayEmbedding(DE_step = 5, DE_dim = 2, DE_slid = 2, alpha = 2, beta = 2, grid_size = 0, filter_param = 0.5)
 start = time.time()
 model.fit(TRAIN_X, TRAIN_Y)
 end = time.time()
@@ -180,4 +180,5 @@ Y_pred = model.predict(TEST_X)
 end = time.time()
 test_time = (end - start) / n_test
 accuracy = accuracy_score(TEST_Y, Y_pred)
+print(model.Trans[9].shape)
 print(f"Acc: {accuracy:.4f}; Train time: {train_time}; Test time: {test_time}")
