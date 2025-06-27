@@ -245,8 +245,8 @@ class LDMLT:
             Distance_l = Distance[l, :]
             index_in = np.nonzero(S_l == 1)[0]
             index_out = np.nonzero(S_l == 0)[0]
-            index_descend = np.argsort(-Distance_l[index_in])
-            index_ascend = np.argsort(Distance_l[index_out])
+            index_descend = np.argsort(-Distance_l[index_in], stable = True)
+            index_ascend = np.argsort(Distance_l[index_out], stable = True)
             triplet_itemi = l
             triplet_itemj = index_in[index_descend[bias:min(bias + Sample_Length, len(index_in))]]
             triplet_itemk = index_out[index_ascend[bias:min(bias + Sample_Length, len(index_out))]]
